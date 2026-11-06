@@ -147,9 +147,8 @@ function Properties() {
 
 export function Play() {
     const [{ logs, ended }, next] = useNext()
-    const [auto, setAuto] = useState(false)
+    const [speed, setSpeed] = useState(0)
     const logRef = useRef<HTMLUListElement>(null)
-    const autoRef = useRef(0)
     const processRef = useRef(false)
     const gotoSummary = useGotoSummary()
     const handleNext = useCallback(() => {
@@ -172,10 +171,10 @@ export function Play() {
         })
     }, [logs])
     useEffect(() => {
-        if (!auto) window.clearInterval(autoRef.current)
-        else autoRef.current = window.setInterval(handleNext, AutoInterval)
-        return () => window.clearInterval(autoRef.current)
-    }, [auto, handleNext])
+        if (speed === 0 || ended) return
+        const timer = window.setInterval(handleNext, AutoInterval / speed)
+        return () => window.clearInterval(timer)
+    }, [speed, ended, handleNext])
     return (
         <div className="screen play">
             <Properties />
@@ -190,8 +189,12 @@ export function Play() {
             </ul>
             <div className="controls">
                 {!ended && (
-                    <button className="primary" onClick={() => setAuto(!auto)}>
-                        {auto ? '关闭自动' : '开启自动'}
+                    <button
+                        className="primary"
+                        title="点击切换：0×（手动）→ 1× → 2× → 0×"
+                        onClick={() => setSpeed(current => (current + 1) % 3)}
+                    >
+                        播放速度：{speed}×{speed === 0 && '（手动）'}
                     </button>
                 )}
                 {ended && (

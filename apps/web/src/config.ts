@@ -10,7 +10,7 @@ if (import.meta.env.MODE === 'development') {
 }
 //
 export const Features = dev.features ?? 1
-// 自动模式自动点击间隔
+// 1 倍速自动播放间隔（毫秒）
 export const AutoInterval = dev.interval ?? 500
 // 可锁定的天赋数量
 export const LockLimit = dev.lock ?? 1
