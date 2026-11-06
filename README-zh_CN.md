@@ -17,3 +17,5 @@
 pnpm build:data
 pnpm dev
 ```
+
+事件现使用结构化 JSON 配置，角色状态、条件、效果及旧数据迁移方式见 [事件数据说明](packages/data/EVENTS.md)。其他配置表仍使用 Excel；`pnpm build:data` 会构建并校验数据。

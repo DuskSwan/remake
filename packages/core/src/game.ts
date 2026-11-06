@@ -1,7 +1,8 @@
 import type { Achievement, Event, Talent } from '@remake/data'
 import { ages, AchievementOpportunity as Ao } from '@remake/data'
 import type { GameState, ProfileState } from './state'
-import { createState, nextProfile, propsEffect } from './state'
+import { createState, nextProfile } from './state'
+import { advanceTime } from './actor'
 import { summary as stateSummary } from './state'
 import type { ReplacementResult, AdditionalPoints } from './talent'
 import { pull, exclude, replacement, additionalPoints } from './talent'
@@ -10,7 +11,7 @@ import { trigger as atr } from './achievement'
 import { trigger as etr, check as ec } from './event'
 import type { RNG } from '@remake/vitex'
 import { pickWeight } from '@remake/vitex'
-import { produce, enableMapSet } from 'immer'
+import { enableMapSet } from 'immer'
 enableMapSet()
 
 export interface TriggerResult<T> {
@@ -53,9 +54,8 @@ export function next(
     profile: ProfileState,
     rng?: RNG,
 ): NextResult {
-    let s = produce(state, draft => {
-        draft.props = propsEffect(state.props, { age: 1 })
-    })
+    if (state.life < 1) throw new Error('Cannot advance an ended life')
+    const s = advanceTime(state)
     const age = s.props.current.age
     const tr = ttr(s, profile, rng)
     const events = ages.get(age)!.event

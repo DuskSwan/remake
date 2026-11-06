@@ -1,6 +1,6 @@
 import { describe, test, expect } from 'bun:test'
-import { screen, renderHook } from '@testing-library/react'
-import { useProfile, useProfileInject } from './profile'
+import { renderHook } from '@testing-library/react'
+import { useProfile } from './profile'
 
 describe('profile', () => {
     test('inject', () => {

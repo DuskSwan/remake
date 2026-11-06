@@ -1,6 +1,7 @@
-import type { Achievement, Event, Talent } from '@remake/data'
+import type { Achievement, Event, Talent, ActorState } from '@remake/data'
 import { produce } from 'immer'
 import { sum, keys } from '@remake/vitex'
+import { createActor } from './actor'
 
 /** 基础的属性 */
 export interface Properties {
@@ -29,10 +30,14 @@ export function createHLProperties(allocation: Allocation) {
 }
 
 export interface GameState {
+    /** Monotonic elapsed years. Age-reversal events only change props.current.age. */
+    clock: number
+    actor: ActorState
     props: HLProperties // 本局属性
     life: number // 本局生命值
     talents: Set<Talent['id']> // 本局拥有的天赋
     events: Set<Event['id']> // 本局触发过的事件
+    eventHistory: Map<Event['id'], { count: number; firstAt: number; lastAt: number }>
     achievements: Set<Achievement['id']> // 本局达成的成就
     talentTriggers: Map<Talent['id'], number> // 本局天赋触发次数
 }
@@ -53,10 +58,13 @@ export function createState(
     talents?: Iterable<Talent['id']>,
 ): GameState {
     return {
+        clock: -1,
+        actor: createActor(),
         props: createHLProperties(allocation),
         life: 1,
         talents: new Set(talents),
         events: new Set(),
+        eventHistory: new Map(),
         achievements: new Set(),
         talentTriggers: new Map(),
     }

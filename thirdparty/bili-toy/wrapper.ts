@@ -1,3 +1,4 @@
+/// <reference path="./lib/toy.d.ts" />
 const PREFIX = 'bili-toy-remake'
 const storage = {
     get: async (keys: string[]) => {

@@ -1,53 +1,45 @@
 import { type Event, events } from '@remake/data'
-import type { Properties, GameState, ProfileState } from './state'
-import { propsEffect, createFlatState } from './state'
-import { check as checkCondition } from '@remake/condition'
+import type { GameState, ProfileState } from './state'
 import type { TriggerResult } from './game'
-import { produce } from 'immer'
+import { applyEffects, recordEvent, satisfies } from './actor'
 
-export function check(
-    event: Event['id'],
-    state: GameState,
-    profile: ProfileState,
-) {
-    const { include, exclude, NoRandom } = events.get(event)!
-    if (NoRandom) return false
-    const flatState = createFlatState(state, profile)
-    if (exclude && checkCondition(flatState, exclude)) return false
-    if (include) return checkCondition(flatState, include)
-    return true
+function definition(id: Event['id']) {
+    const event = events.get(id)
+    if (!event) throw new Error(`Unknown event: ${id}`)
+    return event
+}
+
+/** State eligibility is identical for random draws and immediate follow-ups. */
+export function canTrigger(id: Event['id'], state: GameState, profile: ProfileState) {
+    const event = definition(id)
+    return satisfies(state, profile, event.when)
+        && event.effects.every(effect =>
+            effect.op !== 'child.update' && effect.op !== 'child.grandchild'
+                || satisfies(state, profile, { child: effect.where }))
+}
+
+export function check(id: Event['id'], state: GameState, profile: ProfileState) {
+    return definition(id).random && canTrigger(id, state, profile)
 }
 
 export function trigger(
-    eventId: number,
-    state: GameState,
-    profile: ProfileState,
+    id: Event['id'], state: GameState, profile: ProfileState,
 ): TriggerResult<Event['id']> {
-    const { effect, branch } = events.get(eventId)!
-    const newState = produce(state, draft => {
-        draft.events.add(eventId)
-        if (!effect) return
-        if (effect.LIF) draft.life += effect.LIF
-        const pe: Partial<Properties> = {}
-        if (effect.AGE) pe.age = effect.AGE
-        if (effect.CHR) pe.charm = effect.CHR
-        if (effect.INT) pe.intelligence = effect.INT
-        if (effect.STR) pe.strength = effect.STR
-        if (effect.MNY) pe.money = effect.MNY
-        if (effect.SPR) pe.spirit = effect.SPR
-        draft.props = propsEffect(draft.props, pe)
-    })
-    const flatState = createFlatState(newState, profile)
-    if (branch) {
-        for (const { condition, event } of branch) {
-            if (checkCondition(flatState, condition)) {
-                const result = trigger(event, newState, profile)
-                return {
-                    state: result.state,
-                    triggers: [eventId, ...result.triggers],
-                }
-            }
-        }
+    return resolve(id, state, profile, new Set())
+}
+
+function resolve(
+    id: Event['id'], state: GameState, profile: ProfileState, path: Set<number>,
+): TriggerResult<Event['id']> {
+    if (path.has(id) || path.size >= 64) throw new Error(`Cyclic or excessive event chain at ${id}`)
+    if (!canTrigger(id, state, profile)) throw new Error(`Event ${id} is not eligible in the current state`)
+    const event = definition(id)
+    const updated = recordEvent(applyEffects(state, event.effects), id)
+    const nextPath = new Set([...path, id])
+    for (const followUp of event.followUps ?? []) {
+        if (!satisfies(updated, profile, followUp.when) || !canTrigger(followUp.event, updated, profile)) continue
+        const result = resolve(followUp.event, updated, profile, nextPath)
+        return { state: result.state, triggers: [id, ...result.triggers] }
     }
-    return { state: newState, triggers: [eventId] }
+    return { state: updated, triggers: [id] }
 }

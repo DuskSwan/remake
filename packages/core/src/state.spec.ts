@@ -1,7 +1,7 @@
 import { expect, test, describe } from 'bun:test'
 import { parse, type ConditionNode } from '@remake/condition'
 
-import { achievements, events, talents } from '@remake/data'
+import { achievements, talents } from '@remake/data'
 import type { FlatState, GameState, ProfileState, Properties } from './state'
 import { createFlatState, createHLProperties, propsEffect } from './state'
 import { SupportedFlatStateKeys } from './state'
@@ -41,48 +41,6 @@ function getPropertiesFromCondition(condition: string): Set<keyof FlatState> {
 }
 
 describe('State', () => {
-    test('flat cover event(include, exclude, branch)', () => {
-        const unmappedKeys = new Set<string>()
-        for (const item of events.values()) {
-            const conditionsToTrack: { label: string; text: string }[] = []
-            if (item.include) {
-                conditionsToTrack.push({ label: 'include', text: item.include })
-            }
-            if (item.exclude) {
-                conditionsToTrack.push({ label: 'exclude', text: item.exclude })
-            }
-
-            if (item.branch && Array.isArray(item.branch)) {
-                item.branch.forEach((branchObj, index) => {
-                    if (branchObj && branchObj.condition) {
-                        conditionsToTrack.push({
-                            label: `branch[${index}].condition (目标事件ID: ${branchObj.event})`,
-                            text: branchObj.condition,
-                        })
-                    }
-                })
-            }
-
-            for (const { label, text } of conditionsToTrack) {
-                const usedProperties = getPropertiesFromCondition(text)
-                for (const key of usedProperties) {
-                    if (!SupportedFlatStateKeys.has(key)) {
-                        unmappedKeys.add(
-                            `[事件 ID: ${item.id}] 的 "${label}" 字段使用了未定义的键名: "${key}" (完整条件: "${text}")`,
-                        )
-                    }
-                }
-            }
-        }
-
-        if (unmappedKeys.size > 0) {
-            console.error('\n❌ 发现事件配置表存在未定义的 Property 键名：')
-            unmappedKeys.forEach(msg => console.error(msg))
-        }
-
-        expect(unmappedKeys.size).toBe(0)
-    })
-
     test('flat cover talent(condition)', () => {
         const unmappedKeys = new Set<string>()
         const allTalentItems = talents.values()
