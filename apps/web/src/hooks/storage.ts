@@ -3,6 +3,7 @@ import { atom, useAtom } from 'jotai'
 import { useConfigInject, useProfileInject, useRawProfile } from '@remake/hooks'
 import { useUniqueInject, useUnique } from '@remake/hooks'
 import { init, get, set } from '@/storage'
+import { persistProfile, restoreProfile } from '@/storage/profile'
 import { config } from '@/config'
 
 const initedAtom = atom(false)
@@ -40,15 +41,8 @@ export const useWatcher = () => {
     const [u, saveUnique] = useTransition()
     useEffect(() => {
         if (!inited || !profile) return
-        const str = JSON.stringify({
-            ...profile,
-            times: profile.times,
-            achievements: Array.from(profile.achievements),
-            events: Array.from(profile.events),
-            talents: Array.from(profile.talents),
-        })
         saveProfile(async () => {
-            await set('profile', str)
+            await persistProfile(profile)
         })
     }, [inited, profile, saveProfile])
     useEffect(() => {
@@ -60,4 +54,9 @@ export const useWatcher = () => {
     }, [inited, unique, saveUnique])
 
     return p || u
+}
+
+export const useProfileImport = () => {
+    const profileInject = useProfileInject()
+    return useCallback((text: string) => restoreProfile(text, profileInject), [profileInject])
 }

@@ -1,4 +1,5 @@
 export type { GameState, ProfileState, Properties, Allocation } from './state'
+export { parseProfile, serializeProfile } from './profile'
 export { advanceTime, childAge, satisfies } from './actor'
 export type { PullOptions, ReplacementResult } from './talent'
 export type { AdditionalPoint, AdditionalPoints } from './talent'

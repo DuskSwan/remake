@@ -13,6 +13,7 @@
         "test": "bunx --bun vitest"
     },
     "dependencies": {
+        "@remake/core": "workspace:*",
         "@remake/data": "workspace:*",
         "@remake/hooks": "workspace:*",
         "@remake/thirdparty-bili-toy": "workspace:*",
