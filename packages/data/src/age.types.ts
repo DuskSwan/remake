@@ -1,12 +1,19 @@
 /** 权重事件 */
 export type EventWithWeight = [number, number]
 
+/** Preserve source priority and scaling when combining independently authored pools. */
+export interface EventTier {
+    readonly priority: number
+    readonly scale: number
+    readonly events: EventWithWeight[]
+}
+
 /** 年龄 */
 export type Age = {
     /** 年龄 */
     readonly age: number
     /** 事件池 */
-    readonly event: EventWithWeight[][]
+    readonly event: EventTier[]
 }
 // @vt-types-end
 function handleEvent(val: string | number): {
@@ -33,8 +40,10 @@ export const transformers = {
             li[l] ??= []
             li[l].push(event)
         }
+        const highestPriority = ab[0]!.length - 1
         ab[1]!.shift()
         const levels = ab[0]!.reverse().concat(ab[1]!)
+        const result: EventTier[] = []
         for (let i = 0; i < levels.length; i++) {
             levels[i] ??= []
             const level = levels[i]!
@@ -43,10 +52,10 @@ export const transformers = {
                     Math.max(pow, w.toString().split('.')[1]?.length || 0),
                 0,
             )
-            if (pow <= 1) continue
-            const scale = 10 ** pow
-            for (const item of level) item[1] = Math.floor(item[1] * scale)
+            const scale = pow > 1 ? 10 ** pow : 1
+            if (scale > 1) for (const item of level) item[1] = Math.floor(item[1] * scale)
+            result.push({ priority: highestPriority - i, scale, events: level })
         }
-        return levels
+        return result
     },
 }

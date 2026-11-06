@@ -14,6 +14,7 @@ function seeded(seed: number) {
     }
 }
 
+// Full cultivation routes can exceed the runner's default five-second budget.
 test('300 seeded lives preserve time, child identities and event history through full runs', () => {
     const allTalents = [...talents.keys()]
     let turns = 0
@@ -45,4 +46,4 @@ test('300 seeded lives preserve time, child identities and event history through
     }
     expect(finished).toBe(300)
     expect(turns).toBeGreaterThan(3000)
-})
+}, 15000)

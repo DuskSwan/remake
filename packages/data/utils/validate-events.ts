@@ -1,4 +1,4 @@
-import { events, ages, talents, achievements, type StateCondition } from '../src'
+import { events, ages, eventPools, talents, achievements, type StateCondition } from '../src'
 
 function references(condition: StateCondition) {
     if ('all' in condition) return condition.all.forEach(references)
@@ -34,4 +34,4 @@ for (const [age, pool] of ages) {
         }
     }
 }
-console.log(`Validated ${events.size} events, ${ages.size} age pools and all state/history references.`)
+console.log(`Validated ${eventPools.size} event pools, ${events.size} events, ${ages.size} age pools and all state/history references.`)

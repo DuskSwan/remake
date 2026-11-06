@@ -1,4 +1,4 @@
-import { type Event, events } from '@remake/data'
+import { type Event, events, isEventEnabled } from '@remake/data'
 import type { GameState, ProfileState } from './state'
 import type { TriggerResult } from './game'
 import { applyEffects, recordEvent, satisfies } from './actor'
@@ -12,7 +12,8 @@ function definition(id: Event['id']) {
 /** State eligibility is identical for random draws and immediate follow-ups. */
 export function canTrigger(id: Event['id'], state: GameState, profile: ProfileState) {
     const event = definition(id)
-    return satisfies(state, profile, event.when)
+    return isEventEnabled(id, state.props.current.age)
+        && satisfies(state, profile, event.when)
         && event.effects.every(effect =>
             effect.op !== 'child.update' && effect.op !== 'child.grandchild'
                 || satisfies(state, profile, { child: effect.where }))
